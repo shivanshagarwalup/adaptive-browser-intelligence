@@ -1,10 +1,3 @@
-/**
- * FocusLens - Extension Utilities
- * Why this file exists: Encapsulates pure helper functions for processing URLs and handling chrome.storage operations.
- * How it interacts with other files: Used by background.js to validate, extract, and write activities; and by popup.js to fetch log stats.
- * What problem it solves: Keeps the core event listeners in background.js clean and untangled from parsing and storage API calls.
- */
-
 import { STORAGE_KEYS, LIMITS, EXCLUDED_PROTOCOLS, EXCLUDED_DOMAINS } from './constants.js';
 
 /**

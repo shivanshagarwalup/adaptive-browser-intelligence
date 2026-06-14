@@ -1,20 +1,15 @@
-/**
- * FocusLens - Popup Logic (popup.js)
- * Why this file exists: Orchestrates the dynamic presentation of metrics inside popup.html.
- * How it interacts with other files: Imports loadStoredActivity from utils.js to fetch tracked logs size.
- * What problem it solves: Connects the Chrome storage event logs to the HTML user interface safely.
- */
+chrome.storage.local.get(["activity_log"], (result) => {
 
-import { loadStoredActivity } from './utils.js';
+    let activity = result.activity_log || [];
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const logs = await loadStoredActivity();
-    const countElement = document.getElementById('session-count');
-    if (countElement) {
-      countElement.textContent = logs.length.toString();
+    document.getElementById("sessionCount").innerText =
+        "Sessions: " + activity.length;
+
+    if (activity.length > 0) {
+
+        let last = activity[activity.length - 1];
+
+        document.getElementById("lastSite").innerText =
+            "Last Site: " + last.domain;
     }
-  } catch (error) {
-    console.error('[FocusLens] Failed to retrieve session count for popup:', error);
-  }
 });

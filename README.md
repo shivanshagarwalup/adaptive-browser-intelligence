@@ -1,79 +1,317 @@
-# FocusLens - Adaptive Browser Intelligence Platform (Phase 1)
+# FocusLens
 
-FocusLens is a browser extension-based productivity intelligence system that tracks user browsing behavior, records website usage patterns, and computes accurate domain-level focus time metrics. 
-
-Phase 1 focuses exclusively on a robust browser event capture engine with local persistence.
+Adaptive Browser Intelligence Platform for Productivity Tracking and Behavioral Analysis
 
 ---
 
-## Features
+## Project Vision
 
-- **Domain-Level Tracking**: Automatically parses full URLs to track time spent per domain (e.g. `leetcode.com`, `youtube.com`).
-- **Tab Switching & Navigation Capture**: Triggers calculations when the user switches tabs or navigates to a new site within the same tab.
-- **Service Worker Resiliency**: Persists active tracking states in `chrome.storage.local` to survive background worker suspension.
-- **Window Focus Management**: Pauses and saves logs when the browser window loses focus to other desktop applications.
-- **System Idle Protection**: Suspends tracking if the user is inactive for more than 60 seconds (no keyboard/mouse movements) or locks the screen.
-- **Clean Hygiene**: Ignores empty tabs, local files, and browser internal/extension URLs.
+FocusLens is a browser intelligence platform designed to analyze browsing behavior and eventually help users improve productivity through website scoring, usage analytics, and machine learning driven recommendations.
+
+The long-term goal is to build a system capable of understanding how users spend time online and generating intelligent focus recommendations.
+
+Current Status:
+
+**Phase 1 Completed**
+
+---
+
+## Problem Statement
+
+Most productivity applications only block websites or provide simple time tracking.
+
+They do not understand whether a website is useful or harmful based on individual user goals.
+
+Example:
+
+For one user:
+
+```text
+youtube.com = distraction
+```
+
+For another user:
+
+```text
+youtube.com = learning resource
+```
+
+FocusLens aims to solve this by allowing adaptive productivity scoring based on user behavior and preferences.
+
+---
+
+## Current Features (Phase 1)
+
+Implemented inside Chrome Extension.
+
+Features completed:
+
+- Browser tab activity tracking
+- Website domain detection
+- Session duration measurement
+- Ignore short sessions below 5 seconds
+- Local browser storage persistence
+- Extension popup displaying tracking information
+- Stable event driven architecture using Chrome APIs
+
+Current system tracks:
+
+```text
+leetcode.com → 20 sec
+github.com → 15 sec
+youtube.com → 30 sec
+```
+
+Stored locally inside browser.
+
+---
+
+## System Architecture
+
+Current architecture:
+
+```text
+User switches browser tab
+        ↓
+Chrome Extension detects tab switch
+        ↓
+background.js extracts website domain
+        ↓
+Time spent on previous website calculated
+        ↓
+Activity object created
+        ↓
+Data stored inside chrome.storage.local
+        ↓
+Popup reads stored data
+        ↓
+User sees tracked session data
+```
+
+Detailed architecture available in:
+
+```text
+docs/architecture.md
+```
 
 ---
 
 ## Project Structure
 
-```
+```text
 adaptive-browser-intelligence/
- ├── extension/
- │    ├── manifest.json       # Manifest configuration (Manifest V3)
- │    ├── background.js       # Background event monitoring service worker
- │    ├── constants.js        # Configurable keys, limits, and ignore lists
- │    ├── utils.js            # URL parsing and storage utilities
- │    ├── popup.html          # Toolbar popup UI
- │    ├── popup.js            # Stats updater for popup UI
- │    └── icons/              # Extension toolbar and listing icons
- ├── docs/
- │    └── architecture.md     # In-depth architectural design
- └── README.md                # Project documentation (This file)
+
+docs/
+ └── architecture.md
+
+extension/
+ ├── icons/
+ │    ├── icon-16.png
+ │    ├── icon-48.png
+ │    ├── icon-128.png
+ │
+ ├── background.js
+ ├── manifest.json
+ ├── popup.html
+ ├── popup.js
+
+README.md
 ```
 
 ---
 
-## Installation & Setup
+## Current Technology Stack
 
-To load the extension in Google Chrome:
+Frontend:
 
-1. Open **Google Chrome** and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** by toggling the switch in the top-right corner.
-3. Click the **Load unpacked** button in the top-left corner.
-4. Select the `extension` folder located within your local `adaptive-browser-intelligence` workspace directory.
-5. The **FocusLens** extension card will appear and the extension is now active.
+- HTML
+- JavaScript
+
+Browser APIs:
+
+- Chrome Extension API
+- Chrome Storage API
+
+Development Tools:
+
+- Git
+- GitHub
 
 ---
 
-## Verification & Testing
+## Current Data Structure
 
-1. **Verify UI**:
-   - Click the extension puzzle icon in the Chrome toolbar and pin **FocusLens**.
-   - Click the FocusLens icon to view the popup showing **FocusLens Active** and **Tracked Sessions**.
-2. **Observe Activity Tracking**:
-   - Open a website (e.g., `leetcode.com`) and browse for 15 seconds.
-   - Switch to another website (e.g., `youtube.com`) or switch tabs.
-   - Click the FocusLens icon to check if the **Tracked Sessions** count has increased.
-3. **Inspect Local Storage Logs**:
-   - Go to `chrome://extensions/`.
-   - Click the **service worker** link on the FocusLens card to open the developer tools console.
-   - Run the following command in the console to inspect the structured log of session events:
-     ```javascript
-     chrome.storage.local.get(null, console.log);
-     ```
-   - You will see the event log array structure:
-     ```json
-     {
-       "focuslens_activity_log": [
-         {
-           "domain": "leetcode.com",
-           "start_time": 1710000000,
-           "end_time": 1710000015,
-           "duration_seconds": 15
-         }
-       ]
-     }
-     ```
+```json
+{
+  "activity_log": [
+    {
+      "domain": "leetcode.com",
+      "start_time": 1710000000000,
+      "end_time": 1710000015000,
+      "duration_seconds": 15
+    }
+  ]
+}
+```
+
+---
+
+## Development Challenges Solved
+
+During development the following engineering problems were solved.
+
+### 1. Chrome Extension Manifest Issues
+
+Initial extension loading failed because of incorrect manifest structure.
+
+Solved by fixing manifest configuration.
+
+---
+
+### 2. Service Worker Registration Failure
+
+Initial service worker failed to initialize because of JavaScript syntax errors.
+
+Solved by debugging service worker initialization.
+
+---
+
+### 3. Incorrect Time Tracking Bug
+
+Initial implementation produced incorrect timing values.
+
+Example:
+
+```text
+Actual browsing time = 30 sec
+Tracked time = 109 sec
+```
+
+Root cause:
+
+```javascript
+chrome.tabs.onUpdated
+chrome.tabs.onActivated
+```
+
+Both listeners interfered with timing logic.
+
+Final fix:
+
+Use only:
+
+```javascript
+chrome.tabs.onActivated
+```
+
+Result:
+
+Stable timing calculations.
+
+---
+
+## Roadmap
+
+### Phase 2 - Adaptive Scoring Engine
+
+Users define productive and non productive websites.
+
+Example:
+
+```text
+leetcode.com = +10
+github.com = +8
+instagram.com = -10
+facebook.com = -7
+```
+
+System calculates:
+
+```text
+Focus Score = 82
+```
+
+---
+
+### Phase 3 - Backend Integration
+
+Planned stack:
+
+- Node.js
+- Express.js
+- MongoDB
+- Docker
+
+Features:
+
+- User account system
+- Cloud synchronization
+- API development
+- Persistent analytics storage
+
+---
+
+### Phase 4 - Machine Learning Integration
+
+Planned features:
+
+- Behavioral pattern analysis
+- Productivity trend detection
+- Recommendation engine
+- Intelligent focus improvement suggestions
+
+Possible models:
+
+- Classification models
+- Time series analysis
+
+---
+
+## Future Vision
+
+Final system goal:
+
+```text
+Track browser activity
+        ↓
+Measure productive vs non productive browsing
+        ↓
+Generate productivity score
+        ↓
+Analyze browsing patterns
+        ↓
+Recommend behavioral improvements
+```
+
+---
+
+## Development Philosophy
+
+Project is being developed incrementally.
+
+Process followed:
+
+```text
+Build smallest working system
+        ↓
+Test manually
+        ↓
+Debug architecture issues
+        ↓
+Stabilize implementation
+        ↓
+Add complexity gradually
+```
+
+Focus:
+
+```text
+Correctness first
+Complexity later
+```
+
+---
+
+## Author
+
+Built as a systems engineering and machine learning oriented project focused on browser intelligence and productivity analytics.

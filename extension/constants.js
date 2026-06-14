@@ -1,9 +1,4 @@
-/**
- * FocusLens - Extension Constants
- * Why this file exists: Centralizes all configuration limits, storage keys, and protocol exclusions.
- * How it interacts with other files: Imported by utils.js and background.js to enforce system rules.
- * What problem it solves: Prevents duplication of configuration strings and makes policy tuning easy.
- */
+
 
 export const STORAGE_KEYS = {
   ACTIVITY_LOG: 'focuslens_activity_log',
