@@ -1,15 +1,55 @@
-chrome.storage.local.get(["activity_log"], (result) => {
+import { getRules, saveRule } from "./rulesManager.js";
 
-    let activity = result.activity_log || [];
+const domainInput =
+document.getElementById("domainInput");
 
-    document.getElementById("sessionCount").innerText =
-        "Sessions: " + activity.length;
+const scoreInput =
+document.getElementById("scoreInput");
 
-    if (activity.length > 0) {
+const addRuleBtn =
+document.getElementById("addRuleBtn");
 
-        let last = activity[activity.length - 1];
+const rulesList =
+document.getElementById("rulesList");
 
-        document.getElementById("lastSite").innerText =
-            "Last Site: " + last.domain;
-    }
+
+function renderRules() {
+
+    getRules((rules) => {
+
+        rulesList.innerHTML = "";
+
+        for (let domain in rules) {
+
+            let p = document.createElement("p");
+
+            p.textContent =
+            `${domain} : ${rules[domain]}`;
+
+            rulesList.appendChild(p);
+
+        }
+
+    });
+
+}
+
+
+addRuleBtn.addEventListener("click", () => {
+
+    let domain = domainInput.value.trim();
+
+    let score = scoreInput.value.trim();
+
+    if (!domain || !score) return;
+
+    saveRule(domain, score);
+
+    domainInput.value = "";
+    scoreInput.value = "";
+
+    renderRules();
+
 });
+
+renderRules();

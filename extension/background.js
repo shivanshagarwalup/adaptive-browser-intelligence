@@ -1,21 +1,24 @@
-console.log("FocusLens service worker started");
 
-// Current tracking state
-let previousDomain = null;
-let startTime = null;
 
-// Extract domain from URL
+console.log("FocusLens tracker started");
+
+// Current tracking session
+let currentDomain = null;
+let sessionStart = null;
+let isTracking = false;
+
+
+/* Extract domain from URL */
 function extractDomain(url) {
     try {
-        const parsedUrl = new URL(url);
-        return parsedUrl.hostname;
-    } catch (error) {
-        console.error("Invalid URL:", url);
+        return new URL(url).hostname;
+    } catch {
         return null;
     }
 }
 
-// Ignore internal browser pages
+
+/* Ignore internal browser pages */
 function isTrackable(url) {
     if (!url) return false;
 
@@ -27,72 +30,80 @@ function isTrackable(url) {
     );
 }
 
-// Save activity in local storage
-function saveActivity(activity) {
-    chrome.storage.local.get(["activity_log"], (result) => {
 
-        let activityLog = result.activity_log || [];
+/* Start tracking */
+function startTracking(domain) {
+    currentDomain = domain;
+    sessionStart = Date.now();
+    isTracking = true;
 
-        activityLog.push(activity);
-
-        chrome.storage.local.set({
-            activity_log: activityLog
-        }, () => {
-            console.log("Saved activity:", activity);
-        });
-    });
+    console.log("Started tracking:", domain);
 }
 
-// Main tracking logic
-function handleTabSwitch(tab) {
 
-    if (!tab || !tab.url) return;
+/* Stop tracking */
+function stopTracking() {
+    if (!isTracking) return;
 
-    if (!isTrackable(tab.url)) return;
+    const durationSeconds =
+        Math.floor((Date.now() - sessionStart) / 1000);
 
-    const currentDomain = extractDomain(tab.url);
-    const currentTime = Date.now();
+    if (durationSeconds >= 5) {
+        console.log(
+            `Tracked: ${currentDomain} for ${durationSeconds} sec`
+        );
 
-    console.log("Switched to:", currentDomain);
-
-    // If previous site exists → calculate duration
-    if (previousDomain !== null && startTime !== null) {
-
-        const durationSeconds =
-            Math.floor((currentTime - startTime) / 1000);
-
-        // Ignore accidental short visits
-        if (durationSeconds >= 5) {
-
-            const activityEvent = {
-                domain: previousDomain,
-                start_time: startTime,
-                end_time: currentTime,
-                duration_seconds: durationSeconds
-            };
-
-            saveActivity(activityEvent);
-
-            console.log(
-                `Tracked: ${previousDomain} for ${durationSeconds} sec`
-            );
-        }
+        // Later we add:
+        // saveActivity()
+        // calculateScore()
+        // updateFocusScore()
     }
 
-    // Start tracking new site
-    previousDomain = currentDomain;
-    startTime = currentTime;
+    currentDomain = null;
+    sessionStart = null;
+    isTracking = false;
 }
 
-// Listen ONLY when active tab changes
-chrome.tabs.onActivated.addListener((activeInfo) => {
 
-    chrome.tabs.get(activeInfo.tabId, (tab) => {
+/* Handle tab switching */
+function handleTabChange(tab) {
+    if (!tab || !tab.url) return;
 
-        console.log("Tab switched");
+    // Internal pages
+    if (!isTrackable(tab.url)) {
+        stopTracking();
+        return;
+    }
 
-        handleTabSwitch(tab);
+    const newDomain = extractDomain(tab.url);
 
-    });
+    if (!newDomain) return;
 
-});
+    // Prevent duplicate trigger
+    if (
+        isTracking &&
+        currentDomain === newDomain
+    ) {
+        return;
+    }
+
+    // Stop previous session
+    stopTracking();
+
+    // Start new session
+    startTracking(newDomain);
+}
+
+
+/* Listen for active tab change */
+chrome.tabs.onActivated.addListener(
+    (activeInfo) => {
+        chrome.tabs.get(
+            activeInfo.tabId,
+            (tab) => {
+                console.log("Tab changed");
+                handleTabChange(tab);
+            }
+        );
+    }
+);

@@ -1,14 +1,32 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>FocusLens</title>
+</head>
+
 <body>
 
-<h2>FocusLens Active</h2>
+<h2>FocusLens</h2>
 
-<p id="sessionCount">Sessions: 0</p>
+<h3>Add Website Rule</h3>
 
-<p id="lastSite">Last Site: None</p>
+<input id="domainInput" placeholder="leetcode.com">
 
-<script src="popup.js"></script>
+<input id="scoreInput" placeholder="10 or -10">
+
+<button id="addRuleBtn">Add Rule</button>
+
+<hr>
+
+<h3>Current Rules</h3>
+
+<div id="rulesList"></div>
+
+<hr>
+
+<p id="focusScore">Focus Score: 0</p>
+
+<script type="module" src="popup.js"></script>
 
 </body>
 </html>
